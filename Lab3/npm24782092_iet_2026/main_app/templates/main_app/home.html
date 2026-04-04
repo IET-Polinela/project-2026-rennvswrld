@@ -1,0 +1,29 @@
+{% extends 'main_app/base.html' %}
+
+{% block content %}
+
+<h2 class="mb-4 text-center">📋 Daftar Laporan Masyarakat</h2>
+
+<a href="/add/" class="btn btn-primary mb-3">+ Tambah Laporan</a>
+
+{% for report in reports %}
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h5 class="card-title">{{ report.title }}</h5>
+        <p class="card-text">{{ report.description }}</p>
+
+        <p><b>📍 Lokasi:</b> {{ report.location }}</p>
+        <p>
+            <b>Status:</b> 
+            <span class="badge bg-success">{{ report.status }}</span>
+        </p>
+
+        <a href="/edit/{{ report.id }}" class="btn btn-warning btn-sm">Edit</a>
+        <a href="/delete/{{ report.id }}" class="btn btn-danger btn-sm">Delete</a>
+    </div>
+</div>
+{% empty %}
+<p class="text-muted">Belum ada laporan</p>
+{% endfor %}
+
+{% endblock %}
