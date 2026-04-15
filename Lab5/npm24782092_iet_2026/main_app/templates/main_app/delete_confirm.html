@@ -1,0 +1,15 @@
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active">Hapus Laporan</li>
+    </ol>
+</nav>
+{% endblock %}
+
+<h2>Yakin ingin hapus?</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit">Ya, hapus</button>
+</form>
