@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Laporan{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Home</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow p-4">
+
+    <h2 class="mb-4 text-center">
+        <i class="bi bi-clipboard-data"></i> Daftar Laporan Masyarakat
+    </h2>
+
+    <div class="mb-3">
+        <a href="/add/" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tambah Laporan
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Judul</th>
+                    <th>Lokasi</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+
+            <tbody class="text-center">
+
+                {% for report in reports %}
+                <tr>
+                    <td class="fw-semibold">{{ report.title }}</td>
+                    <td>{{ report.location }}</td>
+
+                    <!-- STATUS -->
+                    <td>
+                    {% if report.status|upper == "REPORTED" %}
+                        <span class="badge bg-secondary">Reported</span>
+
+                    {% elif report.status|upper == "VERIFIED" %}
+                        <span class="badge bg-primary">Verified</span>
+
+                    {% elif report.status|upper == "IN_PROGRESS" %}
+                        <span class="badge bg-warning text-dark">In Progress</span>
+
+                    {% elif report.status|upper == "RESOLVED" %}
+                        <span class="badge bg-success">Resolved</span>
+
+                    {% else %}
+                        <span class="badge bg-dark">Unknown</span>
+                    {% endif %}
+                    </td>
+
+                    <!-- AKSI -->
+                    <td>
+
+                        <!-- WORKFLOW BUTTON -->
+                        <div class="mb-2">
+
+                            {% if report.status|upper == "REPORTED" %}
+                            <form action="{% url 'update_status' report.id %}" method="POST" style="display:inline;"
+                                  onsubmit="return confirm('Ubah status menjadi VERIFIED?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="VERIFIED">
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="bi bi-check-circle"></i> Verifikasi
+                                </button>
+                            </form>
+
+                            {% elif report.status|upper == "VERIFIED" %}
+                            <form action="{% url 'update_status' report.id %}" method="POST" style="display:inline;"
+                                  onsubmit="return confirm('Ubah status menjadi IN PROGRESS?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="IN_PROGRESS">
+                                <button class="btn btn-warning btn-sm">
+                                    <i class="bi bi-gear"></i> Proses
+                                </button>
+                            </form>
+
+                            {% elif report.status|upper == "IN_PROGRESS" %}
+                            <form action="{% url 'update_status' report.id %}" method="POST" style="display:inline;"
+                                  onsubmit="return confirm('Ubah status menjadi RESOLVED?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="RESOLVED">
+                                <button class="btn btn-success btn-sm">
+                                    <i class="bi bi-check2-all"></i> Resolve
+                                </button>
+                            </form>
+
+                            {% endif %}
+
+                        </div>
+
+                        <!-- CRUD BUTTON -->
+                        <div>
+                            <a href="/edit/{{ report.id }}" class="btn btn-info btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- ✅ FIX DELETE (TANPA ALERT JS) -->
+                            <a href="/delete/{{ report.id }}" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="4">
+                        <div class="text-center py-5">
+
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+
+                            <h5 class="mt-3 text-muted">
+                                Belum ada laporan
+                            </h5>
+
+                            <p class="text-muted">
+                                Silakan tambahkan laporan pertama Anda
+                            </p>
+
+                            <a href="/add/" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-circle"></i> Tambah Laporan
+                            </a>
+
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}
