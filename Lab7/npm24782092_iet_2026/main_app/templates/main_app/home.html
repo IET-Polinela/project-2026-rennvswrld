@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Laporan{% endblock %}
+
+{% block content %}
+
+<div class="card shadow p-4">
+
+    <h2 class="mb-4 text-center">
+        📋 Daftar Laporan Masyarakat
+    </h2>
+
+    <!-- SEARCH -->
+    <input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Cari laporan...">
+
+    <!-- BUTTON -->
+    <div class="mb-3 d-flex gap-2">
+        <a href="/dashboard/" class="btn btn-success">📊 Dashboard</a>
+        <a href="/add/" class="btn btn-primary">➕ Tambah Laporan</a>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loadingSpinner" class="text-center my-3" style="display:none;">
+        <div class="spinner-border text-primary"></div>
+    </div>
+
+    <table class="table table-bordered text-center">
+        <thead class="table-dark">
+            <tr>
+                <th>Judul</th>
+                <th>Lokasi</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+
+        <tbody id="reportTableBody"></tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div class="d-flex justify-content-center mt-3" id="pagination"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="detailModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Detail Laporan</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+
+const searchInput = document.getElementById('searchInput');
+const spinner = document.getElementById('loadingSpinner');
+
+// ✅ CSRF FUNCTION (WAJIB)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+// 🔥 highlight
+function highlightText(text, keyword) {
+    if (!keyword) return text;
+    return text.replace(new RegExp(`(${keyword})`, 'gi'), `<mark>$1</mark>`);
+}
+
+// 🔥 load data
+function loadData(query='', page=1) {
+
+    spinner.style.display = "block";
+
+    fetch(`/search/?q=${query}&page=${page}`)
+    .then(res => res.json())
+    .then(data => { 
+        console.log("DATA DARI API:", data); // ✅ WAJIB INI
+
+        spinner.style.display = "none";
+
+        const tableBody = document.getElementById("reportTableBody");
+        tableBody.innerHTML = '';
+
+        data.results.forEach(item => {
+
+            let statusBadge = '';
+            let actionButtons = '';
+
+            if (item.status === 'REPORTED') {
+                statusBadge = '<span class="badge bg-secondary">Reported</span>';
+                actionButtons = `
+                    <form action="/update-status/${item.id}/" method="POST">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                        <input type="hidden" name="status" value="VERIFIED">
+                        <button class="btn btn-primary btn-sm">Verifikasi</button>
+                    </form>
+                `;
+            } 
+            else if (item.status === 'VERIFIED') {
+                statusBadge = '<span class="badge bg-primary">Verified</span>';
+                actionButtons = `
+                    <form action="/update-status/${item.id}/" method="POST">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                        <input type="hidden" name="status" value="IN_PROGRESS">
+                        <button class="btn btn-warning btn-sm">Proses</button>
+                    </form>
+                `;
+            } 
+            else if (item.status === 'IN_PROGRESS') {
+                statusBadge = `<span class="badge bg-warning text-dark">In Progress</span>`;
+                actionButtons = `
+                    <form action="/update-status/${item.id}/" method="POST">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                        <input type="hidden" name="status" value="RESOLVED">
+                        <button class="btn btn-success btn-sm">Resolve</button>
+                    </form>
+                `;
+            } 
+            else if (item.status === 'RESOLVED') {
+                statusBadge = '<span class="badge bg-success">Resolved</span>';
+            }
+
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${highlightText(item.title, query)}</td>
+                    <td>${highlightText(item.location, query)}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+
+                        <div class="mb-2">
+                            ${actionButtons}
+                        </div>
+
+                        <button class="btn btn-secondary btn-sm" onclick="showDetail(${item.id})">
+                            Detail
+                        </button>
+
+                        <a href="/edit/${item.id}" class="btn btn-info btn-sm">✏️</a>
+                        <a href="/delete/${item.id}" class="btn btn-danger btn-sm">🗑️</a>
+
+                    </td>
+                </tr>
+            `;
+        });
+
+        renderPagination(data, query);
+    });
+}
+
+// 🔥 search
+searchInput.addEventListener('keyup', function() {
+    currentPage = 1;
+    loadData(this.value, currentPage);
+});
+
+// 🔥 pagination
+function renderPagination(data, query) {
+    const container = document.getElementById("pagination");
+    container.innerHTML = '';
+
+    if (data.has_prev) {
+        container.innerHTML += `
+            <button class="btn btn-sm btn-secondary me-2"
+                onclick="changePage(${data.current_page - 1}, '${query}')">
+                Prev
+            </button>
+        `;
+    }
+
+    container.innerHTML += `
+        <span class="me-2">Page ${data.current_page} / ${data.total_pages}</span>
+    `;
+
+    if (data.has_next) {
+        container.innerHTML += `
+            <button class="btn btn-sm btn-secondary"
+                onclick="changePage(${data.current_page + 1}, '${query}')">
+                Next
+            </button>
+        `;
+    }
+}
+
+// 🔥 change page
+function changePage(page, query) {
+    currentPage = page;
+    loadData(query, page);
+}
+
+// 🔥 modal
+function showDetail(id) {
+    fetch(`/api/detail/${id}/`)
+    .then(res => res.json())
+    .then(data => {
+        
+
+        let statusBadge = '';
+
+        if (data.status === 'REPORTED') {
+            statusBadge = '<span class="badge bg-secondary">Reported</span>';
+        } 
+        else if (data.status === 'VERIFIED') {
+            statusBadge = '<span class="badge bg-primary">Verified</span>';
+        } 
+        else if (data.status === 'IN_PROGRESS') {
+            statusBadge = '<span class="badge bg-warning text-dark">In Progress</span>';
+        } 
+        else if (data.status === 'RESOLVED') {
+            statusBadge = '<span class="badge bg-success">Resolved</span>';
+        }
+
+        document.getElementById('modalContent').innerHTML = `
+            <p><b>Judul:</b> ${data.title}</p>
+            <p><b>Kategori:</b> ${data.category}</p>
+            <p><b>Status:</b> ${statusBadge}</p>
+            <p><b>Lokasi:</b> ${data.location}</p>
+            <p><b>Deskripsi:</b> ${data.description}</p>
+        `;
+
+        new bootstrap.Modal(document.getElementById('detailModal')).show();
+    });
+}
+
+// 🔥 load awal
+loadData();
+</script>
+
+{% endblock %}
