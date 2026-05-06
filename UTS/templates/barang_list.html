@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Stok Barang - Warung 092{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">Daftar Stok Barang</h2>
+    
+    <!-- Tombol ini hanya muncul jika yang login adalah OWNER -->
+    {% if user.is_owner %}
+    <a href="{% url 'barang_tambah' %}" class="btn btn-primary shadow-sm">+ Tambah Barang Baru</a>
+    {% endif %}
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th class="ps-4">Nama Barang</th>
+                    <th>Kategori</th>
+                    <th>Harga Beli</th>
+                    <th>Stok</th>
+                    <th class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for barang in semua_barang %}
+                <tr>
+                    <td class="ps-4 fw-semibold">{{ barang.nama }}</td>
+                    <td><span class="badge bg-secondary">{{ barang.kategori }}</span></td>
+                    <td>Rp {{ barang.harga_beli }}</td>
+                    <td>{{ barang.stok }} unit</td>
+                    <td class="text-center">
+                        <!-- Tombol Detail (Bisa dilihat semua user) -->
+                        <button class="btn btn-sm btn-outline-info">Detail</button>
+                        
+                        <!-- Tombol Hapus (Hanya untuk OWNER) -->
+                        {% if user.is_owner %}
+                        <form action="{% url 'barang_hapus' barang.pk %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus {{ barang.nama }}?')">Hapus</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted italic">
+                        Belum ada data barang. Silakan klik tombol tambah di atas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

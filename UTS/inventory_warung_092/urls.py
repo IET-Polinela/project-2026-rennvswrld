@@ -18,11 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView # Tambahkan ini
+from barang_app.views import BarangListView, BarangCreateView, BarangDeleteView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Redirect root URL ke login
-    path('', RedirectView.as_view(url='/login/'), name='root'), 
+    path('', BarangListView.as_view(), name='barang_list'),
+    path('tambah/', BarangCreateView.as_view(), name='barang_tambah'),
+    path('hapus/<int:pk>/', BarangDeleteView.as_view(), name='barang_hapus'), # Path hapus dengan ID barang
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 ]
