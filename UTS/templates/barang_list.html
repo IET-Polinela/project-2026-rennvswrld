@@ -1,12 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Stok Barang - Warung 092{% endblock %}
-
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-dark">Daftar Stok Barang</h2>
-    
-    <!-- Tombol ini hanya muncul jika yang login adalah OWNER -->
+    <h2 class="fw-bold">Manajemen Stok Warung</h2>
     {% if user.is_owner %}
     <a href="{% url 'barang_tambah' %}" class="btn btn-primary shadow-sm">+ Tambah Barang Baru</a>
     {% endif %}
@@ -27,27 +23,18 @@
             <tbody>
                 {% for barang in semua_barang %}
                 <tr>
-                    <td class="ps-4 fw-semibold">{{ barang.nama }}</td>
+                    <td class="ps-4 fw-bold">{{ barang.nama }}</td>
                     <td><span class="badge bg-secondary">{{ barang.kategori }}</span></td>
                     <td>Rp {{ barang.harga_beli }}</td>
                     <td>{{ barang.stok }} unit</td>
                     <td class="text-center">
-                        <!-- Tombol Detail (Bisa dilihat semua user) -->
-                        <button class="btn btn-sm btn-outline-info">Detail</button>
+                        <!-- Tombol Detail AJAX -->
+                        <button class="btn btn-sm btn-info text-white shadow-sm" onclick="tampilDetail({{ barang.pk }})">Detail</button>
                         
-                        <!-- Tombol Hapus (Hanya untuk OWNER) -->
                         {% if user.is_owner %}
-                        <form action="{% url 'barang_hapus' barang.pk %}" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus {{ barang.nama }}?')">Hapus</button>
-                        </form>
+                        <!-- Tombol Hapus memicu Modal Cantik -->
+                        <button class="btn btn-sm btn-danger shadow-sm" onclick="konfirmasiHapus({{ barang.pk }}, '{{ barang.nama }}')">Hapus</button>
                         {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-5 text-muted italic">
-                        Belum ada data barang. Silakan klik tombol tambah di atas.
                     </td>
                 </tr>
                 {% endfor %}
@@ -55,4 +42,66 @@
         </table>
     </div>
 </div>
+
+<!-- MODAL DETAIL (ASINKRON - NO REFRESH) -->
+<div class="modal fade" id="modalDetail" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">📦 Detail Barang</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3 border-bottom pb-2"><strong>Nama:</strong> <span id="detNama" class="text-muted ms-2"></span></div>
+                <div class="mb-3 border-bottom pb-2"><strong>Kategori:</strong> <span id="detKategori" class="badge bg-secondary ms-2"></span></div>
+                <div class="mb-3 border-bottom pb-2"><strong>Harga Beli:</strong> <span id="detHarga" class="text-success fw-bold ms-2"></span></div>
+                <div class="mb-0"><strong>Stok:</strong> <span id="detStok" class="ms-2"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HAPUS (CANTIK - REPLACING BROWSER ALERT) -->
+<div class="modal fade" id="modalHapus" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ Konfirmasi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <p>Yakin ingin menghapus <br><strong id="namaBarangHapus"></strong>?</p>
+                <form id="formHapus" method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-danger w-100">Ya, Hapus</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// FUNGSI FETCH DATA (AJAX) UNTUK DETAIL
+function tampilDetail(id) {
+    fetch(`/detail-json/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('detNama').innerText = data.nama;
+            document.getElementById('detKategori').innerText = data.kategori;
+            document.getElementById('detHarga').innerText = data.harga_beli;
+            document.getElementById('detStok').innerText = data.stok + " unit";
+            new bootstrap.Modal(document.getElementById('modalDetail')).show();
+        });
+}
+
+// FUNGSI MODAL HAPUS CUSTOM
+function konfirmasiHapus(id, nama) {
+    document.getElementById('namaBarangHapus').innerText = nama;
+    document.getElementById('formHapus').action = `/hapus/${id}/`;
+    new bootstrap.Modal(document.getElementById('modalHapus')).show();
+}
+</script>
 {% endblock %}
