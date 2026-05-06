@@ -57,7 +57,7 @@ ROOT_URLCONF = 'inventory_warung_092.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -118,3 +118,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+# Tambahkan di baris paling akhir file settings.py
+AUTH_USER_MODEL = 'akun_app.User'
+
+
+# Tambahkan di paling bawah settings.py jika belum ada
+LOGIN_REDIRECT_URL = '/'  # Setelah login berhasil, arahkan ke root (halaman utama)
+LOGOUT_REDIRECT_URL = '/login/' # Setelah logout, arahkan kembali ke login
