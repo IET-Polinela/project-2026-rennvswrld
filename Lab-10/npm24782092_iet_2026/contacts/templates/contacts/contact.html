@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active">About</li>
+    </ol>
+</nav>
+{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-3">📞 Contact Information</h2>
+
+        <p class="text-center text-muted">
+            Jika ada pertanyaan atau kendala, silakan hubungi kami:
+        </p>
+
+        <hr>
+
+        <div class="mb-2">
+            <b>📧 Email:</b> 
+            <span class="text-primary">yayrendi@email.com</span>
+        </div>
+
+        <div class="mb-2">
+            <b>📱 WhatsApp:</b> 
+            <span class="text-success">081219190101</span>
+        </div>
+
+        <div class="mb-2">
+            <b>📍 Alamat:</b> 
+            <span>Bandar Lampung</span>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

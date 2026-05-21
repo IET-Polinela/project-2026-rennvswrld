@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active">About</li>
+    </ol>
+</nav>
+{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-3">About Application</h2>
+
+        <p class="text-center text-muted">
+            Smart City Issue Reporting adalah aplikasi berbasis web 
+            yang digunakan untuk melaporkan permasalahan di lingkungan kota.
+        </p>
+
+        <hr>
+
+        <h5>Tujuan Aplikasi</h5>
+        <ul>
+            <li>Mempermudah masyarakat melaporkan masalah</li>
+            <li>Meningkatkan respons pemerintah</li>
+            <li>Mewujudkan kota yang lebih smart</li>
+        </ul>
+
+        <h5>Lokasi Implementasi</h5>
+        <p>Kota Bandar Lampung</p>
+    </div>
+</div>
+
+{% endblock %}
