@@ -43,3 +43,25 @@ class ReportUpdateStatusView(View):
         report.status = new_status
         report.save()
         return redirect('home')
+    
+    from django.shortcuts import get_object_or_404
+
+def verify_report(request, pk):
+    report = get_object_or_404(Report, pk=pk)
+    report.status = 'VERIFIED'
+    report.save()
+    return redirect('home')
+
+
+def process_report(request, pk):
+    report = get_object_or_404(Report, pk=pk)
+    report.status = 'PROCESS'
+    report.save()
+    return redirect('home')
+
+
+def resolve_report(request, pk):
+    report = get_object_or_404(Report, pk=pk)
+    report.status = 'RESOLVED'
+    report.save()
+    return redirect('home')
