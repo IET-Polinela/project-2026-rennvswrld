@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Ubah Laporan - IET City{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in mb-5">
+    <div class="col-md-8 col-lg-7">
+
+        <div class="card border-0 rounded-4 shadow-sm p-4 p-md-5 bg-white">
+            
+            <div class="d-flex align-items-center gap-3 mb-4 border-bottom border-light pb-4">
+                <div class="d-flex align-items-center justify-content-center bg-warning bg-opacity-10 rounded-3 text-warning" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <i class="bi bi-pencil-square fs-3" style="color: #f39c12 !important;"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">Ubah Data Laporan</h4>
+                    <p class="text-muted small mb-0">Perbarui rincian atau kronologi pengaduan warga secara valid</p>
+                </div>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Judul Keluhan / Masalah</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3"><i class="bi bi-pencil-fill"></i></span>
+                        <input type="text" name="title" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" value="{{ report.title }}" placeholder="Masukkan judul keluhan" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Kategori Keluhan</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3"><i class="bi bi-tags-fill"></i></span>
+                        <select name="category" class="form-select bg-light border-start-0 py-2 shadow-none text-secondary small" required>
+                            <option value="Infrastruktur" {% if report.category == 'Infrastruktur' %}selected{% endif %}>Infrastruktur Jalan / Jembatan</option>
+                            <option value="Fasilitas Umum" {% if report.category == 'Fasilitas Umum' %}selected{% endif %}>Fasilitas Umum / Penerangan</option>
+                            <option value="Keamanan" {% if report.category == 'Keamanan' %}selected{% endif %}>Keamanan / Ketertiban</option>
+                            <option value="Kebersihan" {% if report.category == 'Kebersihan' %}selected{% endif %}>Kebersihan / Lingkungan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Lokasi Spesifik Kejadian</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                        <input type="text" name="location" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" value="{{ report.location }}" placeholder="Nama jalan, kecamatan, atau koordinat" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-secondary">Deskripsi Kronologi Masalah</label>
+                    <textarea name="description" class="form-control bg-light py-3 shadow-none text-secondary small rounded-3" rows="4" placeholder="Jelaskan detail kronologi kerusakan..." required>{{ report.description }}</textarea>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="/" class="btn btn-light text-secondary fw-bold px-4 py-2 rounded-pill border">
+                        Batal
+                    </a>
+                    <button type="submit" class="btn btn-warning text-dark fw-bold px-4 py-2 rounded-pill shadow-sm border-0" style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); border: none;">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Perbarui Laporan
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

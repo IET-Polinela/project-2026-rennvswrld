@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Akun - IET City{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center mt-3 mt-md-4 mb-5 animate-fade-in">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card border-0 rounded-4 shadow-sm p-4 p-md-5 bg-white">
+            
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 p-3 rounded-circle mb-3" style="color: #2980b9; width: 60px; height: 60px;">
+                    <i class="bi bi-person-plus-fill fs-2"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">Pendaftaran Warga</h4>
+                <p class="text-muted small mb-0">Buat akun resmi pelayanan informasi IET City</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Username</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+                            <i class="bi bi-person-fill"></i>
+                        </span>
+                        <input type="text" name="username" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Buat username baru" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Alamat Email</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+                            <i class="bi bi-envelope-fill"></i>
+                        </span>
+                        <input type="email" name="email" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="contoh@email.com" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Password</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+                            <i class="bi bi-key-fill"></i>
+                        </span>
+                        <input type="password" name="password" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Buat password kuat" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-secondary">Konfirmasi Password</label>
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </span>
+                        <input type="password" name="password_confirm" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Ulangi password Anda" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-info text-white w-100 py-2.5 rounded-3 fw-bold shadow-sm border-0 mb-3" style="background: linear-gradient(135deg, #4da3ff 0%, #2575fc 100%);">
+                    <i class="bi bi-check-circle-fill me-1"></i> Selesaikan Pendaftaran
+                </button>
+            </form>
+
+            <div class="text-center mt-2">
+                <p class="small text-muted mb-0">Sudah memiliki akun warga? <a href="{% url 'login' %}" class="text-info fw-bold text-decoration-none">Masuk di Sini</a></p>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}
