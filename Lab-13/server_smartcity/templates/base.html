@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}IET City{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        /* 🎨 Desain Variabel Warna Global & Tipografi Utama */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f4f8fa; /* Dasar abu-abu terang dengan sedikit tint biru lembut */
+            color: #2c3e50;
+        }
+
+        /* 🟦 Navigasi Premium Tema Biru Muda TRI (Gradasi Halus) */
+        .navbar-tri {
+            background: linear-gradient(135deg, #4da3ff 0%, #2980b9 100%) !important;
+            box-shadow: 0 4px 15px rgba(41, 128, 185, 0.15);
+            padding: 12px 0;
+        }
+
+        .navbar-brand-tri {
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease;
+        }
+
+        .navbar-brand-tri:hover {
+            transform: scale(1.02);
+        }
+
+        /* Gaya Tombol Navigasi */
+        .nav-link-tri {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9) !important;
+            padding: 8px 16px !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link-tri:hover {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Navigasi Aktif */
+        .nav-item.active .nav-link-tri {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+        }
+
+        /* 🏷️ Desain Komponen Tag Pengguna (Badge Status) */
+        .user-pill {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff !important;
+            font-weight: 500;
+        }
+
+        /* 🪟 Desain Alert Kustom (Efek Borderless Modern) */
+        .alert-custom {
+            border: none !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            font-weight: 500;
+        }
+
+        /* 📍 Desain Indikator Halaman (Breadcrumb) */
+        .breadcrumb-tri {
+            background-color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.015);
+        }
+
+        .breadcrumb-tri a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-tri a:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-tri shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold navbar-brand-tri" href="/">
+            <i class="bi bi-buildings-fill me-2"></i>IET City
+        </a>
+
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+
+                <li class="nav-item">
+                    <a class="nav-link nav-link-tri" href="/"><i class="bi bi-house-door me-1"></i>Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link nav-link-tri" href="/reports/"><i class="bi bi-file-earmark-text me-1"></i>Reports</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link nav-link-tri" href="/about/"><i class="bi bi-info-circle me-1"></i>About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link nav-link-tri" href="/contacts/"><i class="bi bi-envelope me-1"></i>Contact</a>
+                </li>
+
+                {% if user.is_authenticated %}
+
+                <li class="nav-item ms-lg-3 my-2 my-lg-0">
+                    <span class="nav-link user-pill rounded-pill px-3 py-2 d-inline-flex align-items-center">
+                        <i class="bi bi-person-circle me-2 fs-5"></i> 
+                        <span class="fw-semibold">{{ user.username }}</span>
+
+                        {% if user.is_admin %}
+                            <span class="badge bg-warning text-dark ms-2 fw-bold small rounded-pill">Admin</span>
+                        {% else %}
+                            <span class="badge bg-info text-white ms-2 fw-bold small rounded-pill" style="background-color: #4da3ff !important;">Member</span>
+                        {% endif %}
+                    </span>
+                </li>
+
+                <li class="nav-item">
+                    <form action="{% url 'logout' %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-light text-dark fw-bold ms-lg-2 mt-1 mt-lg-0 px-3 py-2 rounded-pill shadow-sm">
+                            <i class="bi bi-box-arrow-right text-danger me-1"></i> Logout
+                        </button>
+                    </form>
+                </li>
+
+                {% else %}
+
+                <li class="nav-item">
+                    <a class="btn btn-light text-primary fw-bold ms-lg-3 mt-2 mt-lg-0 px-4 py-2 rounded-pill shadow-sm" href="{% url 'login' %}">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="btn btn-outline-light fw-bold ms-lg-2 mt-2 mt-lg-0 px-4 py-2 rounded-pill" href="{% url 'register' %}">
+                        <i class="bi bi-person-plus me-1"></i> Register
+                    </a>
+                </li>
+
+                {% endif %}
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-custom d-flex align-items-center alert-dismissible fade show 
+            {% if 'error' in message.tags %}alert-danger
+            {% elif 'success' in message.tags %}alert-success
+            {% elif 'warning' in message.tags %}alert-warning
+            {% else %}alert-info
+            {% endif %}">
+
+            <i class="bi fs-5
+                {% if 'error' in message.tags %}bi-x-circle-fill text-danger
+                {% elif 'success' in message.tags %}bi-check-circle-fill text-success
+                {% elif 'warning' in message.tags %}bi-exclamation-triangle-fill text-warning
+                {% else %}bi-info-circle-fill text-info
+                {% endif %}
+                me-2"></i>
+
+            <div class="ms-1">{{ message }}</div>
+
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="container mt-4">
+
+    {% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb breadcrumb-tri">
+            <li class="breadcrumb-item d-flex align-items-center">
+                <i class="bi bi-house-door-fill text-muted me-2"></i>
+                <a href="/">Home</a>
+            </li>
+        </ol>
+    </nav>
+    {% endblock %}
+
+    {% block content %}
+    {% endblock %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
