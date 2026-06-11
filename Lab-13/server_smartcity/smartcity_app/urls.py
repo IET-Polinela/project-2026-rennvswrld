@@ -16,6 +16,13 @@ urlpatterns = [
     
     path('api/register/', RegisterAPIView.as_view(), name='api_register'),
 
+    # 🚀 JALUR BARU: Halaman Pembuka / Landing Page di root (/)
+    path('', views.landing_page, name='landing'),
+
+    # 🚀 JALUR BARU: Halaman Utama Daftar Laporan Warga (/reports/)
+    # Menggunakan name='home' agar seluruh tag {% url 'home' %} otomatis lari ke /reports/
+    path('reports/', views.ReportListView.as_view(), name='home'),
+
     # MAIN ROUTES WEB (Monolitik)
     # 🟢 KARENA YANG ATAS DIMATIKAN, DJANGO AKAN MEMBACA API BARU KITA DI DALAM SINI:
     path('', include('main_app.urls')), 

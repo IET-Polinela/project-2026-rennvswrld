@@ -53,6 +53,11 @@ class OwnerRequiredMixin(UserPassesTestMixin):
 # 📋 HALAMAN UTAMA & CRUD WEB (WEB FRONTEND)
 # =====================================================================
 
+# 🚀 FITUR BARU: View untuk membaca halaman pembuka (Landing Page)
+def landing_page(request):
+    return render(request, 'main_app/landing.html')
+
+
 # READ (LIST) - SUDAH DIPROTEKSI PRIVASI
 class ReportListView(LoginRequiredMixin, ListView):
     template_name = 'main_app/home.html'
