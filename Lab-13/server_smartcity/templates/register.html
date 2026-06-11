@@ -16,6 +16,22 @@
                 <p class="text-muted small mb-0">Buat akun resmi pelayanan informasi IET City</p>
             </div>
 
+            {% if form.errors %}
+            <div class="alert alert-danger rounded-3 small mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Gagal Mendaftar:</strong>
+                <ul class="mb-0 mt-1 ps-3">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
             <form method="POST">
                 {% csrf_token %}
                 
@@ -45,7 +61,7 @@
                         <span class="input-group-text bg-light border-end-0 text-muted ps-3">
                             <i class="bi bi-key-fill"></i>
                         </span>
-                        <input type="password" name="password" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Buat password kuat" required>
+                        <input type="password" name="password1" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Buat password kuat" required>
                     </div>
                 </div>
 
@@ -55,7 +71,7 @@
                         <span class="input-group-text bg-light border-end-0 text-muted ps-3">
                             <i class="bi bi-shield-lock-fill"></i>
                         </span>
-                        <input type="password" name="password_confirm" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Ulangi password Anda" required>
+                        <input type="password" name="password2" class="form-control bg-light border-start-0 py-2 shadow-none text-secondary small" placeholder="Ulangi password Anda" required>
                     </div>
                 </div>
 

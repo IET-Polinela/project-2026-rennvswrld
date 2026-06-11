@@ -16,21 +16,44 @@ from .serializers import ReportSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-# =========================
-# 🔐 ADMIN MIXIN
-# =========================
+# =====================================================================
+# 🔐 MIXINS PROTEKSI HAK AKSES (SESUAI ATURAN SKENARIO DOSEN)
+# =====================================================================
+
+# 1. Khusus Admin: Menolak Warga yang mencoba masuk ke menu verifikasi status Admin
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.is_admin
+        return self.request.user.is_authenticated and getattr(self.request.user, 'is_admin', False)
 
     def handle_no_permission(self):
         messages.error(self.request, "Akses ditolak! Hanya admin yang boleh melakukan aksi ini.")
         return redirect('home')
 
+# 2. Khusus Warga: Menolak Admin yang mencoba membuat laporan warga (Alert Merah Ala Riyan)
+class CitizenRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and getattr(self.request.user, 'is_member', False)
 
-# =========================
+    def handle_no_permission(self):
+        messages.error(self.request, "Admin tidak diizinkan membuat laporan! Fitur ini khusus untuk warga.")
+        return redirect('home')
+
+# 3. Khusus Pemilik: Memastikan Warga hanya bisa mengedit/menghapus laporannya sendiri (Citizen1 ==> Report1)
+class OwnerRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        report = self.get_object()
+        return self.request.user.is_authenticated and report.reporter == self.request.user
+
+    def handle_no_permission(self):
+        messages.error(self.request, "Akses ditolak! Hanya pemilik laporan yang boleh melakukan aksi ini.")
+        return redirect('home')
+
+
+# =====================================================================
+# 📋 HALAMAN UTAMA & CRUD WEB (WEB FRONTEND)
+# =====================================================================
+
 # READ (LIST) - SUDAH DIPROTEKSI PRIVASI
-# =========================
 class ReportListView(LoginRequiredMixin, ListView):
     template_name = 'main_app/home.html'
     context_object_name = 'reports'
@@ -46,24 +69,22 @@ class ReportListView(LoginRequiredMixin, ListView):
         return Report.objects.filter(Q(reporter=user) | ~Q(status='DRAFT'))
 
 
-# =========================
-# CREATE (DITAMBAHKAN PROTEKSI)
-# =========================
-class ReportCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+# CREATE (Menggunakan CitizenRequiredMixin agar hanya warga yang bisa membuat laporan)
+class ReportCreateView(LoginRequiredMixin, CitizenRequiredMixin, CreateView):
     model = Report
     fields = ['title', 'category', 'description', 'location']
     template_name = 'main_app/add_report.html'
     success_url = reverse_lazy('home')
 
     def form_valid(self, form):
+        # Otomatis ikat data siapa warga yang sedang login sebagai pembuat laporan (reporter)
+        form.instance.reporter = self.request.user 
         messages.success(self.request, "Laporan berhasil ditambahkan!")
         return super().form_valid(form)
 
 
-# =========================
-# UPDATE (DITAMBAHKAN PROTEKSI)
-# =========================
-class ReportUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+# UPDATE (Menggunakan OwnerRequiredMixin agar hanya pembuat laporan yang bisa mengedit)
+class ReportUpdateView(LoginRequiredMixin, OwnerRequiredMixin, UpdateView):
     model = Report
     fields = ['title', 'category', 'description', 'location']
     template_name = 'main_app/add_report.html'
@@ -74,10 +95,8 @@ class ReportUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-# =========================
-# DELETE (DITAMBAHKAN PROTEKSI)
-# =========================
-class ReportDeleteView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
+# DELETE (Menggunakan OwnerRequiredMixin agar hanya pembuat laporan yang bisa menghapus)
+class ReportDeleteView(LoginRequiredMixin, OwnerRequiredMixin, DeleteView):
     model = Report
     template_name = 'main_app/delete_confirm.html'
     success_url = reverse_lazy('home')
@@ -87,9 +106,7 @@ class ReportDeleteView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-# =========================
 # DETAIL - SUDAH DIPROTEKSI PRIVASI
-# =========================
 class ReportDetailView(LoginRequiredMixin, DetailView):
     template_name = 'main_app/detail.html'
     context_object_name = 'report'
@@ -103,15 +120,16 @@ class ReportDetailView(LoginRequiredMixin, DetailView):
         return Report.objects.filter(Q(reporter=user) | ~Q(status='DRAFT'))
 
 
-# =========================
-# 🔐 DECORATOR (SUDAH ADA, TETAP DIPAKAI)
-# =========================
+# =====================================================================
+# 🔐 FUNCTION-BASED DECORATORS & VIEWS (AKSI KHUSUS ADMIN)
+# =====================================================================
+
 def admin_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('login')
 
-        if not request.user.is_admin:
+        if not getattr(request.user, 'is_admin', False):
             messages.error(request, "Akses ditolak! Hanya admin yang boleh melakukan aksi ini.")
             return redirect('home')
 
@@ -119,9 +137,7 @@ def admin_required(view_func):
     return wrapper
 
 
-# =========================
 # UPDATE STATUS (DITAMBAHKAN DECORATOR)
-# =========================
 @admin_required
 def update_status(request, pk):
     report = get_object_or_404(Report, pk=pk)
@@ -138,9 +154,7 @@ def update_status(request, pk):
     return redirect('/')
 
 
-# =========================
 # OPTIONAL
-# =========================
 @admin_required
 def verify_report(request, pk):
     report = get_object_or_404(Report, pk=pk)
@@ -168,9 +182,10 @@ def resolve_report(request, pk):
     return redirect('home')
 
 
-# =========================
-# LIVE SEARCH API - SUDAH DIPROTEKSI PRIVASI
-# =========================
+# =====================================================================
+# 🔍 LIVE SEARCH API - SUDAH DIPROTEKSI PRIVASI
+# =====================================================================
+
 @require_GET
 def search_reports(request):
     query = request.GET.get('q', '')
@@ -207,9 +222,10 @@ def search_reports(request):
     })
 
 
-# =========================
-# DETAIL API - SUDAH DIPROTEKSI PRIVASI
-# =========================
+# =====================================================================
+# 🌐 DETAIL API - SUDAH DIPROTEKSI PRIVASI
+# =====================================================================
+
 @require_GET
 def report_detail_api(request, pk):
     user = request.user
@@ -235,7 +251,6 @@ def report_detail_api(request, pk):
 # 🌟 FITUR BARU LAB 12: DRF API OPTIMIZATION (FIGURE 1)
 # =====================================================================
 
-# aktivasi PageNumberPagination
 class ReportPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
@@ -243,13 +258,12 @@ class ReportPagination(PageNumberPagination):
 
 
 class ReportViewSet(viewsets.ModelViewSet):
-    # deklarasi pagination dalam ViewSet
     serializer_class = ReportSerializer
     pagination_class = ReportPagination
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    # 🌟 TAMBAHAN SAKTI: Beritahu database siapa pembuat laporannya!
+    # Beritahu database siapa pembuat laporannya!
     def perform_create(self, serializer):
         serializer.save(reporter=self.request.user)
         
