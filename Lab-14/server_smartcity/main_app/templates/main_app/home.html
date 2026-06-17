@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Laporan - IET City{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 rounded-4 shadow-sm p-4 p-md-5 bg-white mb-5">
+
+    <div class="d-flex align-items-center gap-3 mb-4 border-bottom border-light pb-4">
+        <div class="d-flex align-items-center justify-content-center bg-info bg-opacity-10 rounded-3 text-info" style="width: 50px; height: 50px; flex-shrink: 0;">
+            <i class="bi bi-clipboard2-data-fill fs-3" style="color: #2980b9;"></i>
+        </div>
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Daftar Laporan Masyarakat</h3>
+            <p class="text-muted small mb-0 d-none d-sm-block">Sistem pengawasan keluhan infrastruktur wilayah secara terintegrasi</p>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <div class="input-group shadow-sm rounded-3 overflow-hidden">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" id="searchInput" class="form-control border-start-0 ps-2 py-2 shadow-none text-secondary" placeholder="Cari laporan berdasarkan judul atau lokasi...">
+        </div>
+    </div>
+
+    <div class="mb-4 d-flex gap-2 flex-wrap">
+        <a href="/dashboard/" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm d-inline-flex align-items-center">
+            <i class="bi bi-cpu-fill me-2"></i> Dashboard SPA
+        </a>
+        <a href="/add/" class="btn btn-info text-white fw-bold px-4 py-2 rounded-pill shadow-sm d-inline-flex align-items-center" style="background: linear-gradient(135deg, #4da3ff 0%, #2575fc 100%); border: none;">
+            <i class="bi bi-plus-circle-fill me-2"></i> Tambah Laporan
+        </a>
+    </div>
+
+    <div id="loadingSpinner" class="text-center my-4" style="display:none;">
+        <div class="spinner-border text-info" role="status" style="width: 2.5rem; height: 2.5rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted small mt-2">Sinkronisasi data API...</p>
+    </div>
+
+    <div class="table-responsive rounded-3 border border-light">
+        <table class="table table-hover align-middle text-center mb-0">
+            <thead class="table-light text-uppercase text-secondary fs-7" style="border-bottom: 2px solid #eef2f5;">
+                <tr>
+                    <th class="py-3 px-3 text-start" style="width: 35%;">Judul Laporan</th>
+                    <th class="py-3 text-start" style="width: 35%;">Lokasi</th>
+                    <th class="py-3" style="width: 15%;">Status</th>
+                    <th class="py-3" style="width: 15%;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-center mt-4" id="pagination"></div>
+
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow">
+      <div class="modal-header border-bottom-0 pt-4 px-4">
+        <h5 class="fw-bold text-dark d-flex align-items-center">
+            <i class="bi bi-file-earmark-text-fill text-info me-2"></i> Detail Keluhan Warga
+        </h5>
+        <button class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 pb-4" id="modalContent" style="line-height: 1.6;">
+         </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+
+const searchInput = document.getElementById('searchInput');
+const spinner = document.getElementById('loadingSpinner');
+
+// ✅ CSRF FUNCTION
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+// 🔥 Highlight Pencarian Kata Kunci
+function highlightText(text, keyword) {
+    if (!keyword) return text;
+    return text.replace(new RegExp(`(${keyword})`, 'gi'), `<mark class="bg-warning bg-opacity-25 p-0 rounded-1">$1</mark>`);
+}
+
+// 🔥 Mengambil Data Laporan dari Server Backend
+function loadData(query='', page=1) {
+    spinner.style.display = "block";
+
+    fetch(`/search/?q=${query}&page=${page}`)
+    .then(res => res.json())
+    .then(data => { 
+        console.log("DATA DARI API:", data);
+
+        spinner.style.display = "none";
+        const tableBody = document.getElementById("reportTableBody");
+        tableBody.innerHTML = '';
+
+        if(!data.results || data.results.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox display-6 d-block mb-2 text-muted opacity-50"></i>
+                        <span class="fw-semibold">Tidak ada laporan yang cocok dengan pencarian Anda.</span>
+                    </td>
+                </tr>
+            `;
+            renderPagination(data, query);
+            return;
+        }
+
+        data.results.forEach(item => {
+            let statusBadge = '';
+            let actionButtons = '';
+
+            if (item.status === 'REPORTED') {
+                statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-2 fw-bold small"><i class="bi bi-megaphone-fill me-1"></i> Reported</span>';
+                actionButtons = `
+                    <form action="/update-status/${item.id}/" method="POST" class="d-inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                        <input type="hidden" name="status" value="VERIFIED">
+                        <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">Verifikasi</button>
+                    </form>
+                `;
+            } 
+            else if (item.status === 'VERIFIED') {
+                statusBadge = '<span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold small" style="color: #2980b9 !important;"><i class="bi bi-shield-fill-check me-1"></i> Verified</span>';
+                actionButtons = `
+                    <form action="/update-status/${item.id}/" method="POST" class="d-inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                        <input type="hidden" name="status" value="IN_PROGRESS">
+                        <button class="btn btn-warning btn-sm text-dark rounded-pill px-3 fw-bold shadow-sm">Proses</button>
+                    </form>
+                `;
+            } 
+            else if (item.status === 'IN_PROGRESS') {
+                statusBadge = `<span class="badge bg-warning bg-opacity-15 text-warning rounded-pill px-3 py-2 fw-bold small" style="background-color: rgba(243,156,18,0.12); color: #d35400 !important;"><i class="bi bi-hourglass-split me-1"></i> In Progress</span>`;
+                actionButtons = `
+                    <form action="/update-status/${item.id}/" method="POST" class="d-inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                        <input type="hidden" name="status" value="RESOLVED">
+                        <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm">Resolve</button>
+                    </form>
+                `;
+            } 
+            else if (item.status === 'RESOLVED') {
+                statusBadge = '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-bold small"><i class="bi bi-check-all me-1"></i> Resolved</span>';
+            }
+
+            tableBody.innerHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td class="py-3 px-3 text-start fw-semibold text-dark">${highlightText(item.title, query)}</td>
+                    <td class="py-3 text-start text-muted small">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>${highlightText(item.location, query)}
+                    </td>
+                    <td class="py-3">${statusBadge}</td>
+                    <td class="py-3">
+                        <div class="d-inline-flex gap-1 align-items-center">
+                            ${actionButtons ? `<div class="me-1">${actionButtons}</div>` : ''}
+                            
+                            <button class="btn btn-light text-secondary btn-sm rounded-circle p-2 shadow-sm border" onclick="showDetail(${item.id})" title="Detail">
+                                <i class="bi bi-eye-fill px-1"></i>
+                            </button>
+                            
+                            <a href="/edit/${item.id}" class="btn btn-light text-info btn-sm rounded-circle p-2 shadow-sm border" title="Edit">
+                                <i class="bi bi-pencil-square px-1"></i>
+                            </a>
+                            
+                            <a href="/delete/${item.id}" class="btn btn-light text-danger btn-sm rounded-circle p-2 shadow-sm border" title="Hapus">
+                                <i class="bi bi-trash3-fill px-1"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        renderPagination(data, query);
+    });
+}
+
+searchInput.addEventListener('keyup', function() {
+    currentPage = 1;
+    loadData(this.value, currentPage);
+});
+
+function renderPagination(data, query) {
+    const container = document.getElementById("pagination");
+    container.innerHTML = '';
+
+    if (!data.total_pages || data.total_pages <= 1) return;
+
+    if (data.has_prev) {
+        container.innerHTML += `
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2"
+                onclick="changePage(${data.current_page - 1}, '${query}')">
+                <i class="bi bi-chevron-left me-1"></i>Prev
+            </button>
+        `;
+    }
+
+    container.innerHTML += `
+        <span class="align-self-center mx-2 small fw-semibold text-muted">Halaman ${data.current_page} dari ${data.total_pages}</span>
+    `;
+
+    if (data.has_next) {
+        container.innerHTML += `
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 ms-2"
+                onclick="changePage(${data.current_page + 1}, '${query}')">
+                <i class="bi bi-chevron-right ms-1"></i>Next
+            </button>
+        `;
+    }
+}
+
+function changePage(page, query) {
+    currentPage = page;
+    loadData(query, page);
+}
+
+function showDetail(id) {
+    fetch(`/api/detail/${id}/`)
+    .then(res => res.json())
+    .then(data => {
+        let statusBadge = '';
+
+        if (data.status === 'REPORTED') {
+            statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-1 fw-bold small">Reported</span>';
+        } 
+        else if (data.status === 'VERIFIED') {
+            statusBadge = '<span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-bold small" style="color: #2980b9 !important;">Verified</span>';
+        } 
+        else if (data.status === 'IN_PROGRESS') {
+            statusBadge = '<span class="badge bg-warning bg-opacity-15 text-warning rounded-pill px-3 py-1 fw-bold small" style="background-color: rgba(243,156,18,0.12); color: #d35400 !important;">In Progress</span>';
+        } 
+        else if (data.status === 'RESOLVED') {
+            statusBadge = '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-bold small">Resolved</span>';
+        }
+
+        document.getElementById('modalContent').innerHTML = `
+            <div class="mb-3">
+                <label class="text-muted small d-block fw-semibold">Judul Keluhan</label>
+                <span class="text-dark fw-bold fs-5">${data.title}</span>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="text-muted small d-block fw-semibold">Kategori</label>
+                    <span class="badge bg-dark bg-opacity-10 text-dark fw-medium rounded-pill px-3 py-1 mt-1">${data.category}</span>
+                </div>
+                <div class="col-6">
+                    <label class="text-muted small d-block fw-semibold">Status Saat Ini</label>
+                    <div class="mt-1">${statusBadge}</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="text-muted small d-block fw-semibold"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Lokasi Wilayah</label>
+                <span class="text-dark small d-block mt-1 bg-light p-2 rounded-3">${data.location}</span>
+            </div>
+            <div class="mb-0">
+                <label class="text-muted small d-block fw-semibold">Deskripsi Kronologi</label>
+                <p class="text-secondary small mt-1 bg-light p-3 rounded-3 mb-0 text-wrap">${data.description || 'Tidak ada deskripsi tambahan.'}</p>
+            </div>
+        `;
+
+        new bootstrap.Modal(document.getElementById('detailModal')).show();
+    });
+}
+
+loadData();
+</script>
+
+{% endblock %}
