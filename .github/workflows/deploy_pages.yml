@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Jalur lengkap karena folder SPA berada di dalam folder Lab-13
-          path: './Lab-13/smartcity_citizen_spa_24782092'
+          path: './Lab-15/smartcity_citizen_spa_24782092'
 
       - name: Deploy to GitHub Pages
         id: deployment
