@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4 animate-fade-in mb-5">
+    
+    <div class="d-flex align-items-center gap-3 mb-4 bg-white p-4 rounded-4 shadow-sm">
+        <div class="d-flex align-items-center justify-content-center bg-info bg-opacity-10 rounded-3 text-info" style="width: 50px; height: 50px; flex-shrink: 0;">
+            <i class="bi bi-bar-chart-line-fill fs-3" style="color: #2980b9;"></i>
+        </div>
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Dashboard Analisis Laporan</h3>
+            <p class="text-muted small mb-0 d-none d-sm-block">Visualisasi data statistik tren dan status penanganan aduan infrastruktur warga</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <h5 class="fw-bold text-dark text-center mb-4 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-tags text-primary"></i> Laporan per Kategori
+                </h5>
+                <div class="chart-container" style="position: relative; width:100%; height:300px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <h5 class="fw-bold text-dark text-center mb-4 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-pie-chart text-success"></i> Laporan per Status
+                </h5>
+                <div class="chart-container" style="position: relative; width:100%; height:300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+
+        <div class="col-md-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
+                    <i class="bi bi-pin-angle-fill text-danger"></i> 5 Laporan Terbaru <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill small">Reported</span>
+                </h6>
+                <div class="table-responsive rounded-3 border border-light">
+                    <table class="table table-hover align-middle mb-0 small text-center">
+                        <thead class="table-light text-secondary text-uppercase fs-7">
+                            <tr>
+                                <th class="py-2.5 text-start ps-3">Judul</th>
+                                <th class="py-2.5">Kategori</th>
+                                <th class="py-2.5 text-start">Lokasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportedTable">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill text-success"></i> 5 Laporan Terbaru <span class="badge bg-success bg-opacity-10 text-success rounded-pill small">Resolved</span>
+                </h6>
+                <div class="table-responsive rounded-3 border border-light">
+                    <table class="table table-hover align-middle mb-0 small text-center">
+                        <thead class="table-light text-secondary text-uppercase fs-7">
+                            <tr>
+                                <th class="py-2.5 text-start ps-3">Judul</th>
+                                <th class="py-2.5">Kategori</th>
+                                <th class="py-2.5 text-start">Lokasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resolvedTable">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+fetch('/dashboard/stats/')
+.then(response => response.json())
+.then(data => {
+
+    // =====================
+    // CATEGORY CHART (Kustomisasi Warna Tema Biru TRI)
+    // =====================
+    const categoryLabels = data.category_data.map(item => item.category);
+    const categoryValues = data.category_data.map(item => item.total);
+
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'bar',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                label: 'Jumlah Laporan',
+                data: categoryValues,
+                backgroundColor: 'rgba(77, 163, 255, 0.8)', // Warna Biru Muda TRI
+                borderColor: 'rgba(41, 128, 185, 1)',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // =====================
+    // STATUS CHART
+    // =====================
+    const statusLabels = data.status_data.map(item => item.status);
+    const statusValues = data.status_data.map(item => item.total);
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'pie',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusValues,
+                backgroundColor: [
+                    '#3498db', // Resolved
+                    '#e74c3c', // Draft
+                    '#f1c40f', // Verified
+                    '#e67e22', // Reported
+                    '#1abc9c'  // In Progress
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // =====================
+    // TABLE REPORTED
+    // =====================
+    const reportedTable = document.getElementById('reportedTable');
+    if(data.latest_reported.length === 0) {
+        reportedTable.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted small">Tidak ada laporan baru.</td></tr>';
+    } else {
+        data.latest_reported.forEach(item => {
+            reportedTable.innerHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td class="py-2.5 text-start ps-3 fw-semibold text-dark">${item.title}</td>
+                    <td class="py-2.5"><span class="badge bg-dark bg-opacity-10 text-dark rounded-pill">${item.category}</span></td>
+                    <td class="py-2.5 text-start text-muted small"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${item.location}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // =====================
+    // TABLE RESOLVED
+    // =====================
+    const resolvedTable = document.getElementById('resolvedTable');
+    if(data.latest_resolved.length === 0) {
+        resolvedTable.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted small">Belum ada laporan selesai.</td></tr>';
+    } else {
+        data.latest_resolved.forEach(item => {
+            resolvedTable.innerHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td class="py-2.5 text-start ps-3 fw-semibold text-dark">${item.title}</td>
+                    <td class="py-2.5"><span class="badge bg-dark bg-opacity-10 text-dark rounded-pill">${item.category}</span></td>
+                    <td class="py-2.5 text-start text-muted small"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${item.location}</td>
+                </tr>
+            `;
+        });
+    }
+
+});
+</script>
+
+{% endblock %}
